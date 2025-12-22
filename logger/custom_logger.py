@@ -9,8 +9,8 @@ class CustomLogger:
         os.makedirs(self.log_dir, exist_ok=True)
         
         #create log file name based on current date and time
-        self.log_file = f"{datetime.now().strftime('%m_%d_%Y_%H_%M_%S')}.log"
-        log_file_path = os.path.join(self.log_dir, self.log_file)
+        log_file = f"{datetime.now().strftime('%m_%d_%Y_%H_%M_%S')}.log"
+        log_file_path = os.path.join(self.log_dir, log_file)
         #basic logging
         logging.basicConfig(
             filename=log_file_path,
@@ -23,5 +23,6 @@ class CustomLogger:
     
 
 if __name__ == "__main__":
-    logger = CustomLogger().get_logger(__file__)
-    logger.info("This is a test log message.")
+    logger=CustomLogger()
+    logger=logger.get_logger(__file__)
+    logger.info("Custom logger intiated")
