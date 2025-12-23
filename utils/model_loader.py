@@ -46,7 +46,7 @@ class ModelLoader:
         """Loading the llm and return the LLM model"""
         """Load LLM dynamicall based on provider in config."""
         llm_block = self.config["llm"]
-        provider_key = os.getenv("LLM_PROVIDER", "groq")
+        provider_key = os.getenv("LLM_PROVIDER", "google")
 
         if provider_key not in llm_block:
             log.error("Invalid LLM provider specified", provider=provider_key)
