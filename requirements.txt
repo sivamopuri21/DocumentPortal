@@ -10,4 +10,7 @@ structlog
 PyMuPDF
 structlog
 pandas
+streamlit
+langchain-core[tracing]
+pytest
 -e .
