@@ -24,6 +24,7 @@ def test_compare_documents():
 
     ref_file,act_file = comparator.save_uploded_files(ref_upload,act_upload)
     combined_text = comparator.combine_documents()
+    comparator.clean_old_sessions(keep_latest=3)
 
     print("\n combined text preview (First 1000 chars):\n")
     print(combined_text[:1000])
@@ -31,7 +32,7 @@ def test_compare_documents():
     llm_comparator = DocumentComparatorLLM()
     comparision_df = llm_comparator.compare_documents(combined_text)
     print("==== COMPARISON RESULTS ====")
-    print(comparision_df.head())
+    print(comparision_df)
 
 if __name__ == "__main__":
     test_compare_documents()
