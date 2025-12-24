@@ -20,8 +20,8 @@ class ConversationalRAG:
             self.log = CustomLogger().get_logger(__name__)
             self.session_id = session_id
             self.llm = self._load_llm()
-            self.conttextualize_prompt: ChatPromptTemplate = PROMPT_REGISTRY[PromptType.CONTEXTUALIZE_PROMPT.value]
-            self.qa_prompt: ChatPromptTemplate = PROMPT_REGISTRY[PromptType.QA_PROMPT.value]
+            self.contextualize_prompt: ChatPromptTemplate = PROMPT_REGISTRY[PromptType.CONTEXTUALIZE_QUESTION.value]
+            self.qa_prompt:ChatPromptTemplate =PROMPT_REGISTRY[PromptType.CONTEXT_QA.value]
             if retriver is None:
                 raise ValueError("Retriver cannot be None")
             self.retriver = retriver
@@ -41,7 +41,7 @@ class ConversationalRAG:
             vectorstore = FAISS.load_local(index_path, embeddings,allow_dangerous_deserialization=True)
             self.retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 5})
             self.log.info("Retriver loaded successfully from FAISS", session=self.session_id)
-            self._build_lcel_chain()
+            #self._build_lcel_chain()
             return self.retriever
         except Exception as e:
             self.log.error(f"Error loading retriever from FAISS",error=str(e),session=self.session_id)
@@ -80,13 +80,15 @@ class ConversationalRAG:
         return "\n\n".join([d.page_content for d in docs])
     def _build_lcel_chain(self):
         try:
+            self.log.info("Before Building LCEL chain", session=self.session_id)
             question_retriver =(
                 {"input": itemgetter("input"),"chat_history":itemgetter("chat_history")}
-                |self.contextualize_prompt
+                | self.contextualize_prompt
                 | self.llm
                 | StrOutputParser()
             )
-            retrieve_docs = question_retriver | self.retriever | self._format_docs
+            self.log.info("After question_retriver", session=self.session_id)
+            retrieve_docs = question_retriver | self.retriver | self._format_docs
             self.chain = (
                 {"context": retrieve_docs , "input": itemgetter("input"), "chat_history": itemgetter("chat_history")}
                 | self.qa_prompt

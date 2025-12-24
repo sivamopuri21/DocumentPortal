@@ -13,6 +13,7 @@ class DocumentIngestor:
     SUPPORTED_FILE_TYPES = {".pdf", ".docx", ".txt",".md"}
     def __init__(self,temp_dir:str ="data/multi_doc_chat",faiss_dir:str="faiss_index",session_id:str | None=None):
         try:
+            self.log = CustomLogger().get_logger(__name__)
             #base directories
             self.temp_dir = Path(temp_dir)
             self.faiss_dir = Path(faiss_dir)
@@ -20,7 +21,7 @@ class DocumentIngestor:
             self.faiss_dir.mkdir(parents=True, exist_ok=True)
 
             #sessionalized parts
-            self.session_id = session_id or f"session_{datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")}_{uuid.uuid4().hex[:8]}"
+            self.session_id = session_id or f"session_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
             self.session_temp_dir = self.temp_dir / self.session_id
             self.session_faiss_dir = self.faiss_dir / self.session_id
             self.session_temp_dir.mkdir(parents=True, exist_ok=True)
@@ -39,7 +40,7 @@ class DocumentIngestor:
         except Exception as e:
             self.log.error("Failed to intialie DocumentIngestor",error=str(e))
             raise DocumentPoratalException("INitalization error in DocumentIngestor",sys)
-    def ingest_file(self,uploaded_files):
+    def ingest_documents(self,uploaded_files):
         try:
             documents=[]
             for uploaded_file in uploaded_files:
@@ -87,7 +88,7 @@ class DocumentIngestor:
             self.log.info("FAISS index saved to disk", path=str(self.session_faiss_dir), session=self.session_id)
 
             retriever = vectorstore.as_retriever(search_kwargs={"k": 3},search_type="similarity")
-            self.lof.info("Retriever created successfully", retriever_type=str(type(retriever)), session=self.session_id)
+            self.log.info("Retriever created successfully", retriever_type=str(type(retriever)), session=self.session_id)
             return retriever
         
         except Exception as e:
