@@ -39,9 +39,38 @@ class DocumentIngestor:
         except Exception as e:
             self.log.error("Failed to intialie DocumentIngestor",error=str(e))
             raise DocumentPoratalException("INitalization error in DocumentIngestor",sys)
-    def ingest_file(self):
+    def ingest_file(self,uploaded_files):
         try:
-            pass
+            documents=[]
+            for uploaded_file in uploaded_files:
+                ext = Path(uploaded_file.name).suffix.lower()
+                if ext not in self.SUPPORTED_FILE_TYPES:
+                    self.log.warning("Unsupported file type", file=uploaded_file.name)
+                    continue
+                unique_filename = f"{uuid.uuid4().hex[:8]}{ext}"
+                temp_path = self.session_temp_dir / unique_filename
+                with open(temp_path, "wb") as f:
+                    f.write(uploaded_file.read())
+                self.log.info("File saved for ingestion", filename=str(uploaded_file.name),saved_as = str(temp_path),session = self.session_id)
+                if ext == ".pdf":
+                    loader = PyPDFLoader(str(temp_path))
+                elif ext == ".docx":
+                    loader = Docx2txtLoader(str(temp_path))
+                elif ext == ".txt":
+                    loader = TextLoader(str(temp_path)) 
+                else:
+                    self.log.info("Unsupported file type encountered",filename = uploaded_file.name)
+                    continue
+
+                docs = loader.load()
+                documents.extend(docs)
+
+            if not documents:
+                raise DocumentPoratalException("No documents found in the uploaded file", sys)
+                
+            self.log.info("All Documents loaded successfully", total_docs=len(documents), session=self.session_id)
+            return self._create_retriver(documents)
+                    
         except Exception as e:
             self.log.error("Failed to ingest file", error=str(e))
             raise DocumentPoratalException("Failed to ingest file in DocumentIngestor",sys)
