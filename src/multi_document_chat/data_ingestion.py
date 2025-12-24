@@ -76,7 +76,20 @@ class DocumentIngestor:
             raise DocumentPoratalException("Failed to ingest file in DocumentIngestor",sys)
     def _create_retriver(self,documents):
         try:
-            pass
+            splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=300)
+            chunks = splitter.split_documents(documents)
+            self.log.info("Documents split successfully", total_chunks=len(chunks), session=self.session_id)
+            embeddings = self.model_loader.load_embeddings()
+            vectorstore = FAISS.from_documents(chunks, embeddings)
+
+            #save FAISS index under session folder
+            vectorstore.save_local(str(self.session_faiss_dir))
+            self.log.info("FAISS index saved to disk", path=str(self.session_faiss_dir), session=self.session_id)
+
+            retriever = vectorstore.as_retriever(search_kwargs={"k": 3},search_type="similarity")
+            self.lof.info("Retriever created successfully", retriever_type=str(type(retriever)), session=self.session_id)
+            return retriever
+        
         except Exception as e:
             self.log.error("Failed to create retriver", error=str(e))
             raise DocumentPoratalException("Failed to create retriver in DocumentIngestor",sys)
