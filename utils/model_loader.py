@@ -7,6 +7,7 @@ from utils.config_loader import load_config
 from langchain_groq import ChatGroq
 from logger.custom_logger import CustomLogger
 from exception.custom_exception import DocumentPoratalException
+from .config_loader import load_config
 import sys
 
 log = CustomLogger().get_logger(__name__)

@@ -16,22 +16,28 @@ from src.document_ingestion.data_ingestion import (
     DocHandler,
     DocumentComparator,
     ChatIngestor,
-    FaissManager
+    FaissManager,
 )
 FAISS_BASE = os.getenv("FAISS_BASE", "faiss_index")
 UPLOAD_BASE = os.getenv("UPLOAD_BASE", "data")
+FAISS_INDEX_NAME = os.getenv("FAISS_INDEX_NAME", "index")
+
+app = FastAPI(title="Document Portal API", version="0.1")
+
 from src.document_analyzer.data_analysis import DocumentAnalyzer
 from src.document_compare.document_comparator import DocumentComparatorLLM
 from src.document_chat.retrival import ConversationalRAG
 
-# BASE_DIR = Path(__file__).resolve().parent.parent  # project root
+BASE_DIR = Path(__file__).resolve().parent.parent  # project root
+app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
+templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 # app.mount(
 #     "/static",
 #     StaticFiles(directory=BASE_DIR / "static"),
 #     name="static"
 # )
-app = FastAPI(title="Document Portal API", version="0.1")
+#app = FastAPI(title="Document Portal API", version="0.1")
 
 app.add_middleware(
     CORSMiddleware,
@@ -42,35 +48,37 @@ app.add_middleware(
 )
 
 # serve static & templates
-app.mount("/static", StaticFiles(directory="../static"), name="static")
-templates = Jinja2Templates(directory="../templates")
+# app.mount("/static", StaticFiles(directory="../static"), name="static")
+# templates = Jinja2Templates(directory="../templates")
 
-@app.get("/",response_class=HTMLResponse)
+@app.get("/", response_class=HTMLResponse)
 async def serve_ui(request: Request):
     # templates/index.html ko render karega
-    return templates.TemplateResponse("index.html", {"request": request})
+    resp = templates.TemplateResponse("index.html", {"request": request})
+    resp.headers["Cache-Control"] = "no-store"
+    return resp
 
 @app.get("/health")
 def health() -> Dict[str, str]:
     return {"status": "ok", "service": "document-portal"}
 
-class FastAPIFileAdapter:
-    """Adapt FastAPI UploadFile -> .name + .getbuffer() API"""
-    def __init__(self, uf: UploadFile):
-        self._uf = uf
-        self.name = uf.filename
-    def getbuffer(self) -> bytes:
-        self._uf.file.seek(0)
-        return self._uf.file.read()
+# class FastAPIFileAdapter:
+#     """Adapt FastAPI UploadFile -> .name + .getbuffer() API"""
+#     def __init__(self, uf: UploadFile):
+#         self._uf = uf
+#         self.name = uf.filename
+#     def getbuffer(self) -> bytes:
+#         self._uf.file.seek(0)
+#         return self._uf.file.read()
 
-def _read_pdf_via_handler(handler: DocHandler, path:str) -> str:
-    """
-    Helper function to read PDF using DocHandler.
-    """
-    try:
-        pass
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error reading PDF: {str(e)}")
+# def _read_pdf_via_handler(handler: DocHandler, path:str) -> str:
+#     """
+#     Helper function to read PDF using DocHandler.
+#     """
+#     try:
+#         pass
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=f"Error reading PDF: {str(e)}")
     
 @app.post("/analyze")
 async def analyze_document(file: UploadFile = File(...)) -> Any:
@@ -78,7 +86,7 @@ async def analyze_document(file: UploadFile = File(...)) -> Any:
         dh = DocHandler()
         saved_path = dh.save_pdf(FastAPIFileAdapter(file))
         text = _read_pdf_via_handler(dh, saved_path)
-        analyzer=DocumentAnalyzer()
+        analyzer = DocumentAnalyzer()
         result = analyzer.analyze_document(text)
         return JSONResponse(content=result)
     except HTTPException:
@@ -118,7 +126,9 @@ async def chat_build_index(
             use_session_dirs=use_session_dirs,
             session_id=session_id or None,
         )
-        ci.build_retriever(wrapped, chunk_size=chunk_size, chunk_overlap=chunk_overlap, k=k)
+        ci.build_retriever(  # method name corrected
+            wrapped, chunk_size=chunk_size, chunk_overlap=chunk_overlap, k=k
+        )
         return {"session_id": ci.session_id, "k": k, "use_session_dirs": use_session_dirs}
     except HTTPException:
         raise
@@ -142,8 +152,8 @@ async def chat_query(
             raise HTTPException(status_code=404, detail=f"FAISS index not found at: {index_dir}")
 
         # Initialize LCEL-style RAG pipeline
-        rag = ConversationalRAG(session_id=session_id) #type: ignore
-        rag.load_retriever_from_faiss(index_dir)
+        rag = ConversationalRAG(session_id=session_id)
+        rag.load_retriever_from_faiss(index_dir, k=k)  # build retriever + chain
 
         # Optional: For now we pass empty chat history
         response = rag.invoke(question, chat_history=[])
@@ -160,6 +170,22 @@ async def chat_query(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Query failed: {e}")
 
+
+class FastAPIFileAdapter:
+    """Adapt FastAPI UploadFile -> .name + .getbuffer() API"""
+    def __init__(self, uf: UploadFile):
+        self._uf = uf
+        self.name = uf.filename
+    def getbuffer(self) -> bytes:
+        self._uf.file.seek(0)
+        return self._uf.file.read()
+
+def _read_pdf_via_handler(handler: DocHandler, path: str) -> str:
+    if hasattr(handler, "read_pdf"):
+        return handler.read_pdf(path)  # type: ignore
+    if hasattr(handler, "read_"):
+        return handler.read_(path)  # type: ignore
+    raise RuntimeError("DocHandler has neither read_pdf nor read_ method.")
 
 # command for executing the fast api
 # Run from project root: uvicorn api.main:app --reload    
