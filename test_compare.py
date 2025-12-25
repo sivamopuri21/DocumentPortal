@@ -1,38 +1,38 @@
-import io
-from pathlib import Path
-from src.document_compare.data_ingestion import DocumentIngestion
-from src.document_compare.document_comparator import DocumentComparatorLLM
+# import io
+# from pathlib import Path
+# from src.document_compare.data_ingestion import DocumentIngestion
+# from src.document_compare.document_comparator import DocumentComparatorLLM
 
-def load_fake_uploaded_file(file_path:Path):
-    return io.BytesIO(file_path.read_bytes())
+# def load_fake_uploaded_file(file_path:Path):
+#     return io.BytesIO(file_path.read_bytes())
 
-def test_compare_documents():
-    ref_path=Path("C:\\repos\\LLMProjects\\DocumentPortal\\data\\document_compare\\Nov-2021.pdf")
-    act_path=Path("C:\\repos\\LLMProjects\\DocumentPortal\\data\\document_compare\\Dec-2021.pdf")
+# def test_compare_documents():
+#     ref_path=Path("C:\\repos\\LLMProjects\\DocumentPortal\\data\\document_compare\\Nov-2021.pdf")
+#     act_path=Path("C:\\repos\\LLMProjects\\DocumentPortal\\data\\document_compare\\Dec-2021.pdf")
 
-    class FakeUpload:
-        def __init__(self,file_path:Path):
-            self.name = file_path.name
-            self._buffer = file_path.read_bytes()
+#     class FakeUpload:
+#         def __init__(self,file_path:Path):
+#             self.name = file_path.name
+#             self._buffer = file_path.read_bytes()
 
-        def getbuffer(self):
-            return self._buffer
+#         def getbuffer(self):
+#             return self._buffer
         
-    comparator = DocumentIngestion()
-    ref_upload = FakeUpload(ref_path)
-    act_upload = FakeUpload(act_path)
+#     comparator = DocumentIngestion()
+#     ref_upload = FakeUpload(ref_path)
+#     act_upload = FakeUpload(act_path)
 
-    ref_file,act_file = comparator.save_uploded_files(ref_upload,act_upload)
-    combined_text = comparator.combine_documents()
-    comparator.clean_old_sessions(keep_latest=3)
+#     ref_file,act_file = comparator.save_uploded_files(ref_upload,act_upload)
+#     combined_text = comparator.combine_documents()
+#     comparator.clean_old_sessions(keep_latest=3)
 
-    print("\n combined text preview (First 1000 chars):\n")
-    print(combined_text[:1000])
+#     print("\n combined text preview (First 1000 chars):\n")
+#     print(combined_text[:1000])
 
-    llm_comparator = DocumentComparatorLLM()
-    comparision_df = llm_comparator.compare_documents(combined_text)
-    print("==== COMPARISON RESULTS ====")
-    print(comparision_df)
+#     llm_comparator = DocumentComparatorLLM()
+#     comparision_df = llm_comparator.compare_documents(combined_text)
+#     print("==== COMPARISON RESULTS ====")
+#     print(comparision_df)
 
-if __name__ == "__main__":
-    test_compare_documents()
+# if __name__ == "__main__":
+#     test_compare_documents()
