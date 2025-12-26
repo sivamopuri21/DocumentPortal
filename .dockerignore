@@ -9,3 +9,5 @@ venv/
 .gitignore
 *.log
 logs/
+.env
+.env.*
