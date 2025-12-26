@@ -1,14 +1,14 @@
 {
   "family": "documentportaltd",
   "networkMode": "awsvpc",
-  "executionRoleArn": "arn:aws:iam::685057748560:role/ecsTaskExecutionRole",
+  "executionRoleArn": "arn:aws:iam::654455899822:role/DocumentPortalRole",
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "1024",
   "memory": "8192",
   "containerDefinitions": [
     {
-      "name": "document-portal-container",
-      "image": "685057748560.dkr.ecr.ap-south-1.amazonaws.com/documentportal:latest",
+      "name": "documentportalliveclass",
+      "image": "654455899822.dkr.ecr.ap-south-1.amazonaws.com/documentportalliveclass",
       "cpu": 1024,
       "essential": true,
       "portMappings": [
@@ -29,19 +29,19 @@
       "secrets": [
         {
           "name": "GROQ_API_KEY",
-          "valueFrom": "arn:aws:secretsmanager:ap-south-1:685057748560:secret:GROQ_API_KEY"
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:654455899822:secret:api_key-5yv7sD:GROQ_API_KEY"
         },
         {
           "name": "HF_TOKEN",
-          "valueFrom": "arn:aws:secretsmanager:ap-south-1:685057748560:secret:HF_TOKEN"
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:654455899822:secret:api_key-5yv7sD:HF_TOKEN"
         },
         {
           "name": "GOOGLE_API_KEY",
-          "valueFrom": "arn:aws:secretsmanager:ap-south-1:685057748560:secret:GOOGLE_API_KEY"
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:654455899822:secret:api_key-5yv7sD:GOOGLE_API_KEY"
         },
         {
           "name": "LANGCHAIN_API_KEY",
-          "valueFrom": "arn:aws:secretsmanager:ap-south-1:685057748560:secret:LANGCHAIN_API_KEY"
+          "valueFrom": "arn:aws:secretsmanager:ap-south-1:654455899822:secret:api_key-5yv7sD:LANGCHAIN_API_KEY"
         }
       ],
       "logConfiguration": {
