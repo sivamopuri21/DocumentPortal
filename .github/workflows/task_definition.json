@@ -7,7 +7,7 @@
   "memory": "8192",
   "containerDefinitions": [
     {
-      "name": "documentportalliveclass",
+      "name": "document-portal-container",
       "image": "654455899822.dkr.ecr.ap-south-1.amazonaws.com/documentportalliveclass",
       "cpu": 1024,
       "essential": true,
