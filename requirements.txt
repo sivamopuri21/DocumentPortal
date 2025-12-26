@@ -33,4 +33,5 @@ python-multipart==0.0.20
 pytest==8.4.1
 docx2txt==0.9
 pypdf==5.8.0
+cfn-lint
 #-e .
